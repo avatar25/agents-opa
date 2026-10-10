@@ -47,7 +47,10 @@ export default function Page() {
           </p>
         </section>
 
-        <section id="scenarios" aria-label="Scenarios" className="scroll-mt-6">
+        <section id="scenarios" aria-labelledby="scenarios-title" className="scroll-mt-6">
+          <h2 id="scenarios-title" className="sr-only">
+            Scenarios
+          </h2>
           <Explorer />
         </section>
 
