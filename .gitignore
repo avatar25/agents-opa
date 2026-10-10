@@ -12,3 +12,4 @@ test-results/
 playwright-report/
 .tools/
 .claude/
+.env*
