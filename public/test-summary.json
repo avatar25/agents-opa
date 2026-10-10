@@ -1,0 +1,30 @@
+{
+  "opa_version": "1.21.1",
+  "total": 23,
+  "passed": 23,
+  "tests": [
+    "test_approval_does_not_rescue_failed_checks",
+    "test_base_request_is_allowed",
+    "test_baseline",
+    "test_confused_deputy",
+    "test_empty_recipients_denied",
+    "test_every_scenario_matches_expected",
+    "test_granted_but_uncatalogued_tool_denied",
+    "test_lookalike_domain_denied",
+    "test_missing_recipients_denied",
+    "test_mixed_recipients_denied",
+    "test_payment_at_limit_allowed",
+    "test_payment_one_rupee_over_denied",
+    "test_payment_without_amount_denied",
+    "test_poisoned_email",
+    "test_read_file_after_untrusted_content_allowed",
+    "test_result_defined_for_empty_input",
+    "test_run_tests_by_code_helper_allowed",
+    "test_unknown_agent_denied",
+    "test_unknown_tool_denied",
+    "test_unknown_user_denied",
+    "test_unknown_user_denied_for_tool_with_no_requirements",
+    "test_web_sets_amount",
+    "test_wrong_agent"
+  ]
+}

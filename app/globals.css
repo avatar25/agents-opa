@@ -1,0 +1,362 @@
+@import "tailwindcss";
+
+/* ---------- design tokens: the only place colours and fonts are defined ---------- */
+@theme {
+  --color-bg: #0c0e12;
+  --color-panel: #151922;
+  --color-panel-deep: #11141a;
+  --color-code: #0f1217;
+  --color-line: #262d3a;
+  --color-line-strong: #343c4c;
+  --color-line-node: #2e3544;
+  --color-ink: #eceae4;
+  --color-ink-2: #c4c9d2;
+  --color-muted: #a3aab6;
+  /* dimmed text for inactive nodes; still ≥4.5:1 on panel */
+  --color-faint: #858d99;
+  --color-accent: #f5b841;
+  --color-accent-tint: #221c0f;
+  --color-allow: #5eead4;
+  --color-allow-tint: #0f2422;
+  --color-approval: #fde047;
+  --color-approval-tint: #26230f;
+  --color-deny: #fb923c;
+  --color-deny-tint: #2a1a10;
+  --color-edge: #8c95a6;
+  --color-edge-dim: #262d3a;
+  --color-paper: #f6f3ec;
+  --color-paper-line: #ddd6c8;
+  --color-paper-ink: #1d2027;
+  --color-paper-muted: #5b6070;
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@layer base {
+  html {
+    background: var(--color-bg);
+    color: var(--color-ink);
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+  pre,
+  code {
+    tab-size: 2;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* ---------- flow graph ---------- */
+/* Geometry is authored in canvas units (desktop 1104×440, mobile 360×592).
+   --u is one canvas unit in CSS pixels, so the whole graph scales with its
+   container and switches layout without JS measurement or layout shift. */
+
+@layer components {
+  .graph-wrap {
+    container: graph / inline-size;
+    max-width: 1104px;
+    margin-inline: auto;
+  }
+  .graph-canvas {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1104 / 440;
+    --u: calc(100cqw / 1104);
+  }
+  .graph-canvas > svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+  .edges-v {
+    display: none;
+  }
+
+  .gnode {
+    position: absolute;
+    left: calc(var(--x) * var(--u));
+    top: calc(var(--y) * var(--u));
+    width: calc(var(--w) * var(--u));
+    height: calc(var(--h) * var(--u));
+    padding: calc(9 * var(--u)) calc(12 * var(--u));
+    border-radius: calc(10 * var(--u));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: calc(3 * var(--u));
+    text-align: left;
+    background: var(--color-panel-deep);
+    border: 1px solid var(--color-line-node);
+    color: var(--color-ink);
+    cursor: pointer;
+    transition:
+      border-color 150ms,
+      background-color 150ms,
+      box-shadow 150ms,
+      color 150ms;
+  }
+  .gnode:hover {
+    border-color: var(--color-line-strong);
+    background: #161b24;
+  }
+  .gnode[aria-pressed="true"] {
+    box-shadow:
+      0 0 0 2px var(--color-panel),
+      0 0 0 4px var(--color-accent);
+  }
+  .gnode:focus-visible {
+    outline-offset: 6px;
+  }
+  .gk {
+    font-family: var(--font-mono);
+    font-size: max(9px, calc(10 * var(--u)));
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gt {
+    font-weight: 600;
+    font-size: max(11px, calc(15 * var(--u)));
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: calc(7 * var(--u));
+  }
+  .gs {
+    font-family: var(--font-mono);
+    font-size: max(9.5px, calc(11 * var(--u)));
+    color: var(--color-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gavatar {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: calc(22 * var(--u));
+    height: calc(22 * var(--u));
+    border-radius: 999px;
+    background: var(--color-line-strong);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-size: max(10px, calc(12 * var(--u)));
+  }
+
+  .gnode[data-kind="outcome"] .gt {
+    white-space: normal;
+    align-items: flex-start;
+    font-size: max(11px, calc(14 * var(--u)));
+  }
+  .gnode[data-kind="opa"] {
+    border-color: var(--color-accent);
+    background: var(--color-accent-tint);
+  }
+  .gnode[data-kind="opa"] .gk {
+    color: var(--color-accent);
+  }
+  .gnode[data-kind="untrusted"] {
+    border: 1.5px dashed var(--color-deny);
+    background: var(--color-deny-tint);
+  }
+  .gnode[data-kind="untrusted"] .gk {
+    color: var(--color-deny);
+  }
+
+  /* outcomes: only the one taken lights up; the rest drop back */
+  .gnode[data-state="dim"] {
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--color-line);
+    color: var(--color-faint);
+  }
+  .gnode[data-state="dim"] .gk,
+  .gnode[data-state="dim"] .gs {
+    color: var(--color-faint);
+  }
+  .gnode[data-state="dim"] .gglyph {
+    opacity: 0.5;
+  }
+  .gnode[data-outcome="allow"][data-state="taken"] {
+    border-color: var(--color-allow);
+    background: var(--color-allow-tint);
+  }
+  .gnode[data-outcome="needs_approval"][data-state="taken"] {
+    border-color: var(--color-approval);
+    background: var(--color-approval-tint);
+  }
+  .gnode[data-outcome="deny"][data-state="taken"] {
+    border-color: var(--color-deny);
+    background: var(--color-deny-tint);
+  }
+  .gnode[data-outcome="allow"][data-state="taken"] :is(.gk, .gglyph) {
+    color: var(--color-allow);
+  }
+  .gnode[data-outcome="needs_approval"][data-state="taken"] :is(.gk, .gglyph) {
+    color: var(--color-approval);
+  }
+  .gnode[data-outcome="deny"][data-state="taken"] :is(.gk, .gglyph) {
+    color: var(--color-deny);
+  }
+
+  /* edges */
+  .edge {
+    fill: none;
+    stroke: var(--color-edge-dim);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+  .head {
+    fill: var(--color-edge-dim);
+  }
+  .edge[data-tone="on"] {
+    stroke: var(--color-edge);
+  }
+  .head[data-tone="on"] {
+    fill: var(--color-edge);
+  }
+  .edge[data-tone="accent"] {
+    stroke: var(--color-accent);
+  }
+  .head[data-tone="accent"] {
+    fill: var(--color-accent);
+  }
+  .edge[data-tone="injected"] {
+    stroke: var(--color-deny);
+    stroke-dasharray: 5 4;
+  }
+  .head[data-tone="injected"] {
+    fill: var(--color-deny);
+  }
+  .edge[data-tone="allow"] {
+    stroke: var(--color-allow);
+    stroke-width: 2;
+  }
+  .head[data-tone="allow"] {
+    fill: var(--color-allow);
+  }
+  .edge[data-tone="needs_approval"] {
+    stroke: var(--color-approval);
+    stroke-width: 2;
+  }
+  .head[data-tone="needs_approval"] {
+    fill: var(--color-approval);
+  }
+  .edge[data-tone="deny"] {
+    stroke: var(--color-deny);
+    stroke-width: 2;
+  }
+  .head[data-tone="deny"] {
+    fill: var(--color-deny);
+  }
+  .elabel {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    fill: var(--color-muted);
+  }
+  .elabel[data-tone="accent"] {
+    fill: var(--color-accent);
+  }
+  .elabel[data-tone="injected"] {
+    fill: var(--color-deny);
+  }
+
+  /* draw the taken path once, in order (~600ms total) */
+  .draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: edge-draw 110ms ease-out forwards;
+    animation-delay: calc(var(--i) * 100ms);
+  }
+  .draw[data-tone="injected"] {
+    stroke-dasharray: 5 4;
+    stroke-dashoffset: 0;
+    opacity: 0;
+    animation-name: edge-fade;
+  }
+  .pop {
+    opacity: 0;
+    animation: edge-fade 90ms ease-out forwards;
+    animation-delay: calc(var(--i) * 100ms + 90ms);
+  }
+  @keyframes edge-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes edge-fade {
+    to {
+      opacity: 1;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .draw,
+    .pop,
+    .draw[data-tone="injected"] {
+      animation: none;
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+    .gnode {
+      transition: none;
+    }
+  }
+
+  /* below ~860px of graph width: vertical layout, outcomes as a row of three */
+  @container graph (max-width: 859px) {
+    .graph-canvas {
+      aspect-ratio: 360 / 592;
+      max-width: 440px;
+      margin-inline: auto;
+      --u: calc(min(100cqw, 440px) / 360);
+    }
+    .gnode {
+      left: calc(var(--mx) * var(--u));
+      top: calc(var(--my) * var(--u));
+      width: calc(var(--mw) * var(--u));
+      height: calc(var(--mh) * var(--u));
+      padding: calc(8 * var(--u)) calc(10 * var(--u));
+    }
+    .gnode[data-kind="outcome"] .gk {
+      display: none;
+    }
+    .gnode[data-kind="outcome"] .gt {
+      font-size: max(11px, calc(13 * var(--u)));
+    }
+    .edges-h {
+      display: none;
+    }
+    .edges-v {
+      display: block;
+    }
+    .elabel {
+      font-size: 8.5px;
+    }
+  }
+}

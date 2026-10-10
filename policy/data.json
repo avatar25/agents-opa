@@ -1,0 +1,18 @@
+{
+  "org": { "domain": "corp.example" },
+  "limits": { "payment_inr": 50000 },
+  "agents": {
+    "inbox-assistant": { "tools": ["send_email", "read_file", "create_payment"] },
+    "code-helper": { "tools": ["read_file", "run_tests"] }
+  },
+  "users": {
+    "asha@corp.example": { "name": "Asha", "role": "Finance lead", "permissions": ["email.send", "files.read", "payments.create"] },
+    "ravi@corp.example": { "name": "Ravi", "role": "Intern", "permissions": ["email.send", "files.read"] }
+  },
+  "tools": {
+    "send_email":     { "requires": ["email.send"],      "side_effects": true },
+    "create_payment": { "requires": ["payments.create"], "side_effects": true },
+    "read_file":      { "requires": ["files.read"],      "side_effects": false },
+    "run_tests":      { "requires": [],                  "side_effects": false }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "agents-opa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Authorizing AI agents with OPA: an interactive explainer where the real Rego policy runs in the browser as WebAssembly.",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "policy": "bash scripts/build-policy.sh"
+  },
+  "dependencies": {
+    "@open-policy-agent/opa-wasm": "1.10.0",
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  },
+  "packageManager": "pnpm@10.9.0"
+}

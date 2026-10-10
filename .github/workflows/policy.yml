@@ -1,0 +1,50 @@
+name: policy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    name: opa test + wasm is fresh
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: open-policy-agent/setup-opa@v2
+        with:
+          version: 1.21.1
+
+      - name: fmt, check, test, build wasm
+        run: bash scripts/build-policy.sh
+
+      # The deployed page runs the committed policy.wasm. Fail if it isn't
+      # exactly what the tested policy/ compiles to.
+      - name: committed wasm matches policy/
+        run: |
+          if ! git diff --exit-code --stat public/; then
+            echo "::error::public/policy.wasm or public/test-summary.json is stale. Run 'pnpm policy' and commit the result."
+            exit 1
+          fi
+
+  app:
+    name: typecheck, vitest, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
